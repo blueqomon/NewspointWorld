@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewspointWorld LIVE - Verdensnyheder & Multi-opslag</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Merriweather -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            red: '#e50914',
+                            redHover: '#b80710',
+                            dark: '#0f172a',
+                            cardDark: '#1e293b',
+                            accent: '#38bdf8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .news-ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .news-ticker {
+            display: inline-block;
+            animation: ticker 35s linear infinite;
+        }
+        .news-ticker:hover {
+            animation-play-state: paused;
+        }
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .aspect-video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+        .aspect-video-container iframe,
+        .aspect-video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-red selection:text-white">
+
+    <!-- TOP TICKER BAR (BREAKING NEWS) -->
+    <div class="bg-brand-red text-white text-xs font-semibold flex items-center z-50 border-b border-red-800 shadow-lg">
+        <div class="bg-black/40 px-4 py-2 flex items-center gap-2 uppercase tracking-widest shrink-0 font-bold border-r border-red-700">
+            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <i class="fa-solid fa-bolt"></i> Breaking News
+        </div>
+        <div class="news-ticker-wrap flex-1 py-2 px-2 text-slate-100 font-medium overflow-hidden">
+            <div class="news-ticker flex items-center gap-8">
+                <span><strong class="text-yellow-300">17:15:</strong> FN indkalder til haste-topmøde vedrørende global klimaaftale i Genève.</span>
+                <span>•</span>
+                <span><strong class="text-yellow-300">16:48:</strong> Teknologigiganter præsenterer gennembrud i kvante-AI.</span>
+                <span>•</span>
+                <span><strong class="text-yellow-300">16:20:</strong> Centralbanker antyder nye rentereguleringer efter stærke regnskaber.</span>
+                <span>•</span>
+                <span><strong class="text-yellow-300">15:55:</strong> Ny rummission opsendes mod Mars fra Cape Canaveral.</span>
+            </div>
+        </div>
+        <div class="bg-black/30 px-3 py-2 hidden md:flex items-center gap-2 text-slate-200 text-xs shrink-0">
+            <i class="fa-regular fa-clock"></i> <span id="clock-display">17:21 CET</span>
+        </div>
+    </div>
+
+    <!-- CONTROL / ADMIN TOP BAR SIMULATOR -->
+    <div class="bg-slate-900 border-b border-slate-800 px-4 py-2 text-xs flex justify-between items-center z-40">
+        <div class="flex items-center space-x-3">
+            <span class="text-slate-400 font-medium"><i class="fa-solid fa-sliders text-brand-accent mr-1"></i> Mode Status:</span>
+            <span id="current-mode-badge" class="bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold px-2 py-0.5 rounded">
+                Offentlig Nyhedsside Visning
+            </span>
+        </div>
+        <div class="flex items-center gap-3" id="top-bar-actions">
+            <!-- Dynamic buttons rendered via updateAdminUI() -->
+        </div>
+    </div>
+
+    <!-- MAIN SITE HEADER -->
+    <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-30 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex justify-between items-center gap-4">
+                
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="filterCategory('all')">
+                    <div class="bg-brand-red text-white font-black text-2xl px-3 py-1 rounded tracking-tighter shadow-lg flex items-center gap-2">
+                        <span>NEWSPOINT</span>
+                        <span class="bg-black px-1.5 py-0.5 text-xs text-brand-red rounded">WORLD</span>
+                    </div>
+                    <span class="hidden lg:inline text-xs font-semibold text-slate-400 uppercase tracking-widest border-l border-slate-700 pl-3">
+                        Uafhængig Verdenspresse
+                    </span>
+                </div>
+
+                <!-- Navigation Categories -->
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-2 text-sm font-semibold">
+                    <button onclick="filterCategory('all')" class="nav-cat-btn px-3 py-1.5 rounded-lg text-white bg-slate-800 border border-slate-700">Forside</button>
+                    <button onclick="filterCategory('verden')" class="nav-cat-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">Verden</button>
+                    <button onclick="filterCategory('politik')" class="nav-cat-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">Politik</button>
+                    <button onclick="filterCategory('teknologi')" class="nav-cat-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">Teknologi</button>
+                    <button onclick="filterCategory('okonomi')" class="nav-cat-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800">Økonomi</button>
+                    <button onclick="filterCategory('live')" class="nav-cat-btn px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-950/40 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Live Video
+                    </button>
+                </nav>
+
+                <!-- Search & Actions -->
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Søg i nyheder..." class="bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent w-36 sm:w-48 transition">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-xs text-slate-500"></i>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION: MAIN LIVE BROADCAST & TOP STORY -->
+    <section class="bg-slate-900 border-b border-slate-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                
+                <!-- Main Live Stream Broadcast Player (7 cols) -->
+                <div class="lg:col-span-7 flex flex-col">
+                    <div class="relative rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl flex-1 flex flex-col justify-center">
+                        <div id="hero-media-container" class="aspect-video-container w-full h-full bg-black">
+                            <video id="hero-live-video" class="w-full h-full object-cover" autoplay muted loop playsinline src="https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4"></video>
+                        </div>
+
+                        <!-- Live Badge Overlay -->
+                        <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
+                            <span class="bg-brand-red text-white text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider flex items-center gap-1.5 shadow">
+                                <span class="w-2 h-2 rounded-full bg-white animate-ping"></span> LIVE SIGNAL
+                            </span>
+                            <span class="bg-black/60 backdrop-blur text-slate-200 text-xs px-2.5 py-1 rounded border border-white/10 font-mono">
+                                4K Ultra HD
+                            </span>
+                        </div>
+
+                        <!-- Video Controls Overlay -->
+                        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 z-20 flex justify-between items-center text-xs">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button onclick="toggleHeroPlay()" id="btn-hero-play" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur transition">
+                                    <i class="fa-solid fa-pause"></i>
+                                </button>
+                                <button onclick="toggleHeroMute()" id="btn-hero-mute" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg backdrop-blur transition flex items-center gap-1.5 font-semibold">
+                                    <i class="fa-solid fa-volume-xmark" id="hero-mute-icon"></i> <span id="hero-mute-text">Slå lyd til</span>
+                                </button>
+                                <label class="bg-brand-red/80 hover:bg-brand-red text-white px-3 py-1.5 rounded-lg backdrop-blur transition cursor-pointer flex items-center gap-1.5 font-semibold">
+                                    <i class="fa-solid fa-upload"></i> MP4 Harddisk
+                                    <input type="file" accept="video/mp4,video/*" onchange="handleHeroUpload(this)" class="hidden">
+                                </label>
+                                <button onclick="openYouTubeLiveModal()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg backdrop-blur transition font-semibold flex items-center gap-1.5">
+                                    <i class="fa-brands fa-youtube"></i> YouTube Live Link
+                                </button>
+                            </div>
+                            <div class="text-slate-400 font-mono text-[11px]">
+                                Direkte fra Hovedkvarteret
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Story Meta Details (5 cols) -->
+                <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-brand-accent uppercase tracking-wider mb-2">
+                            <span><i class="fa-solid fa-globe"></i> Global Tophistorie</span>
+                            <span>•</span>
+                            <span class="text-slate-400 font-normal">Opdateret for 4 min siden</span>
+                        </div>
+                        <h1 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight font-serif mb-3">
+                            Historisk klimatopmøde i Genève indkaldt efter globale temperaturrekorder
+                        </h1>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                            Ledere fra mere end 140 nationer samles i dag for at færdiggøre en bindende aftale om omstilling og investering i grønne energiteknologier. Se live-transmissionen og de opfølgende analyser direkte her.
+                        </p>
+                    </div>
+
+                    <!-- Key highlights bullet points -->
+                    <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Centrale punkter i sagen:</div>
+                        <div class="flex items-start gap-2 text-xs text-slate-300">
+                            <i class="fa-solid fa-check text-green-400 mt-0.5"></i>
+                            <span>Nye CO2-reduktionsmål indføres fra 2027.</span>
+                        </div>
+                        <div class="flex items-start gap-2 text-xs text-slate-300">
+                            <i class="fa-solid fa-check text-green-400 mt-0.5"></i>
+                            <span>Milliardfond oprettes til støtte for ulande.</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions & Share -->
+                    <div class="pt-2 flex items-center justify-between border-t border-slate-800">
+                        <button onclick="openArticleModal(1)" class="bg-brand-red hover:bg-brand-redHover text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-lg transition flex items-center gap-2">
+                            Læs hele dækningen <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <div class="flex items-center gap-2 text-slate-400 text-sm">
+                            <button onclick="shareArticle('Topmøde')" class="p-2 hover:text-white transition"><i class="fa-solid fa-share-nodes"></i></button>
+                            <button onclick="bookmarkArticle(1)" class="p-2 hover:text-yellow-400 transition"><i class="fa-regular fa-bookmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT AREA: MULTI-POST GRID & LIVE FEED SIDEBAR -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT SECTION: MULTI-OPSLAG GRID (8 Cols) -->
+            <section class="lg:col-span-8 space-y-8">
+                
+                <div class="flex justify-between items-end border-b border-slate-800 pb-3">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white font-serif flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-brand-red"></i> Multi-Opslag & Mediedækning
+                        </h2>
+                        <p class="text-slate-400 text-xs mt-1">Sammensatte opslag med videoklip, gallerier og opfølgende analyser</p>
+                    </div>
+                    <div class="text-xs text-slate-500 font-medium">
+                        Viser <span id="post-count-label">4</span> opslag
+                    </div>
+                </div>
+
+                <!-- Multi-Opslag Grid -->
+                <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+            </section>
+
+            <!-- RIGHT SECTION: CHRONOLOGICAL LIVE FEED SIDEBAR (4 Cols) -->
+            <aside class="lg:col-span-4 space-y-6">
+                
+                <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl sticky top-24">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                            Live Nyheds-stream
+                        </h3>
+                        <span class="text-[11px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Minut-for-minut</span>
+                    </div>
+
+                    <!-- Timeline Feed Container -->
+                    <div id="live-timeline" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                        <!-- Timeline Items populated dynamically -->
+                    </div>
+
+                    <!-- Follow-up Notice -->
+                    <div class="mt-4 pt-3 border-t border-slate-800 text-center">
+                        <p class="text-xs text-slate-500">Nye opdateringer indstrømmer automatisk.</p>
+                    </div>
+                </div>
+
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-10 text-slate-400 text-sm mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="bg-brand-red text-white font-black text-xl px-2.5 py-0.5 rounded inline-block mb-3">NEWSPOINTWORLD</div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Verdensførende nyhedsplatform bygget med WordPress CMS-arkitektur og optimeret til video-streaming og multi-opslag.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-white text-xs font-bold uppercase tracking-wider mb-3">Kategorier</h4>
+                <ul class="text-xs space-y-2">
+                    <li><a href="#" onclick="filterCategory('verden')" class="hover:text-white">Verdensnyheder</a></li>
+                    <li><a href="#" onclick="filterCategory('politik')" class="hover:text-white">International Politik</a></li>
+                    <li><a href="#" onclick="filterCategory('teknologi')" class="hover:text-white">Teknologi & AI</a></li>
+                    <li><a href="#" onclick="filterCategory('okonomi')" class="hover:text-white">Global Økonomi</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white text-xs font-bold uppercase tracking-wider mb-3">Video Services</h4>
+                <ul class="text-xs space-y-2">
+                    <li><a href="#" class="hover:text-white">4K Live Stream Signal</a></li>
+                    <li><a href="#" class="hover:text-white">Dokumentarklip & Arkiv</a></li>
+                    <li><a href="#" class="hover:text-white">Vimeo & Mux Integration</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white text-xs font-bold uppercase tracking-wider mb-3">Opfølgning & Nyhedsbrev</h4>
+                <p class="text-xs text-slate-400 mb-2">Få opfølgende analyser direkte i din indbakke.</p>
+                <div class="flex gap-2">
+                    <input type="email" placeholder="Din e-mail..." class="bg-slate-950 border border-slate-800 text-xs px-2.5 py-1.5 rounded text-white flex-1">
+                    <button onclick="alert('Tak for din tilmelding!')" class="bg-brand-red text-white text-xs px-3 py-1.5 rounded font-bold">Tilmeld</button>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500">
+            <div class="flex items-center gap-4">
+                <span>&copy; 2026 NEWSPOINTWORLD.COM MEDIA INC. ALLE RETTIGHEDER FORBEHOLDES.</span>
+                <button onclick="openAdminLoginModal()" class="text-slate-400 hover:text-brand-accent transition flex items-center gap-1 font-mono">
+                    <i class="fa-solid fa-lock text-[10px]"></i> Admin Login
+                </button>
+            </div>
+            <span>Bygget til professionel mediehåndtering.</span>
+        </div>
+    </footer>
+
+    <!-- =============================================================== -->
+    <!-- MODAL 1: CMS PUBLISH OVERLAY (CREATE MULTI-OPSLAG)              -->
+    <!-- =============================================================== -->
+    <div id="cms-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center sticky top-0 bg-slate-900 z-10">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="toggleCMSOverlay()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-house text-brand-accent"></i> Tilbage til Forside
+                    </button>
+                    <button onclick="switchCmsTab('create')" id="tab-btn-create" class="px-4 py-2 rounded-lg font-bold text-xs bg-brand-red text-white flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-plus-circle"></i> Opret Nyt Opslag
+                    </button>
+                    <button onclick="switchCmsTab('manage')" id="tab-btn-manage" class="px-4 py-2 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-list-check text-brand-accent"></i> Mine Opslag (Rediger / Slet / Publicer)
+                    </button>
+                </div>
+                <button onclick="toggleCMSOverlay()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+                        <div id="cms-tab-create" class="p-6">
+                <form id="cms-form" onsubmit="handleCMSPublish(event)" class="space-y-5">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Overskrift (Headline)</label>
+                    <input type="text" id="cms-title" required placeholder="F.eks. Ny aftale indgået på topmødet..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-brand-accent">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Kategori</label>
+                        <select id="cms-category" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+                            <option value="verden">Verden</option>
+                            <option value="politik">Politik</option>
+                            <option value="teknologi">Teknologi</option>
+                            <option value="okonomi">Økonomi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Forfatter / Kilde</label>
+                        <input type="text" id="cms-author" value="Redaktionen" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">1. Indledende Manchet / Tekst</label>
+                    <textarea id="cms-intro" rows="2" required placeholder="Skriv det kortfattede resumé her..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-brand-accent"></textarea>
+                </div>
+
+                <!-- Media Attachments -->
+                <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
+                    <span class="text-xs font-bold text-brand-accent uppercase tracking-wider block"><i class="fa-solid fa-photo-film mr-1"></i> Multi-Medie Tilknytning & Harddisk Upload</span>
+
+                    <!-- Forside Live-Video Upload -->
+                    <div class="border-b border-slate-800 pb-2 mb-2">
+                        <label class="block text-[11px] text-amber-400 font-bold mb-1"><i class="fa-solid fa-tv mr-1"></i> Opdater Forside-Video (Valgfrit - Harddisk / MP4)</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input type="file" id="cms-hero-video-file" accept="video/mp4,video/*" onchange="handleHeroUpload(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-700 cursor-pointer">
+                            <input type="text" id="cms-hero-video-url" placeholder="Eller indsæt forside MP4 URL..." onchange="handleHeroUrlChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white font-mono">
+                        </div>
+                    </div>
+                    
+                    <!-- Billede: Link eller Harddisk -->
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Opslags-Billede (Vælg fil fra harddisk eller behold URL)</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input type="file" id="cms-image-file" accept="image/*" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-brand-red file:text-white hover:file:bg-brand-redHover cursor-pointer">
+                            <input type="text" id="cms-image" value="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80" placeholder="Eller indsæt billede URL" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white font-mono">
+                        </div>
+                    </div>
+
+                    <!-- Video: Link eller Harddisk -->
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Opslags-Video MP4 (Vælg fil fra harddisk eller behold URL)</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input type="file" id="cms-video-file" accept="video/mp4,video/*" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-xs text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-brand-red file:text-white hover:file:bg-brand-redHover cursor-pointer">
+                            <input type="text" id="cms-video" value="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4" placeholder="Eller indsæt MP4 URL" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">2. Opfølgende Tekst & Konklusion</label>
+                    <textarea id="cms-followup" rows="3" required placeholder="Skriv den uddybende og opfølgende tekst her..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-brand-accent"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button type="button" onclick="toggleCMSOverlay()" class="px-4 py-2 text-slate-400 hover:text-white text-sm">Annuller</button>
+                    <button type="submit" class="bg-brand-red hover:bg-brand-redHover text-white px-6 py-2 rounded-lg font-bold text-sm shadow">
+                        Udgiv Opslag Live
+                    </button>
+                </div>
+            </form>
+            </div>
+
+            <!-- TAB 2: MANAGE & EDIT POSTS INSIDE CMS MODAL -->
+            <div id="cms-tab-manage" class="p-6 space-y-4 hidden">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-brand-accent"></i> Oversigt over alle oprettede opslag
+                    </h4>
+                    <span class="text-xs text-slate-400 font-mono">Direkte redigering & status</span>
+                </div>
+                <p class="text-xs text-slate-400">Her kan du tænde/slukke for publicering (afpublicere/skjule), redigere tekst og overskrifter, eller slette opslag helt fra platformen.</p>
+                <div id="cms-manage-posts-list" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                    <!-- Dynamic List -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- MODAL 2: FULL STORY READ MODAL WITH VIDEO & COMMENTS            -->
+    <!-- =============================================================== -->
+    <div id="article-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div id="article-modal-content" class="p-6 sm:p-8 space-y-6">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // DATA STORAGE & INITIAL POSTS
+        let postsData = [
+            {
+                id: 1,
+                category: 'politik',
+                categoryLabel: 'Politik & Miljø',
+                title: 'FN-topmøde i Genève: Aftale om CO2-reduktion i slutfase',
+                intro: 'Internationale forhandlere arbejder i døgndrift for at lukke den sidste del af klimaplanen, der skal reducere emissioner med 45% inden 2030.',
+                image: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4',
+                followup: 'Opfølgende analyse: Eksperter peger på, at udspillet kan få afgørende betydning for de europæiske energimarkeder og accelerere udbygningen af sol- og vindenergi i hele Europa.',
+                author: 'Mette Lauridsen',
+                date: '17:10 CET'
+            },
+            {
+                id: 2,
+                category: 'teknologi',
+                categoryLabel: 'Teknologi & AI',
+                title: 'Gennembrud i kvanteteknologi åbner nye horisonter',
+                intro: 'Forskere fra førende universiteter har demonstreret en ny type kvante-processor, der kan afvikle komplekse beregninger på få sekunder.',
+                image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-city-traffic-at-night-11-large.mp4',
+                followup: 'Opfølgning: Teknologien forventes at finde sin første kommercielle anvendelse inden for medicinsk forskning og avanceret klimamodellering.',
+                author: 'Thomas Berg',
+                date: '16:45 CET'
+            },
+            {
+                id: 3,
+                category: 'okonomi',
+                categoryLabel: 'Global Økonomi',
+                title: 'Markederne reagerer positivt på nye handelstal',
+                intro: 'De europæiske og amerikanske aktieindeks steg her til eftermiddag efter offentliggørelsen af stærke eksporttal for tredje kvartal.',
+                image: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
+                followup: 'Opfølgning: Centralbankerne maner dog fortsat til forsigtighed og understreger, at inflationsudviklingen følges tæt.',
+                author: 'Sofie Holm',
+                date: '15:30 CET'
+            },
+            {
+                id: 4,
+                category: 'verden',
+                categoryLabel: 'Verdensnyheder',
+                title: 'Ny rummission offentliggør første billeder fra kredsløb',
+                intro: 'Teleskop-satellitten har sendt sine første højopløselige billeder af fjerne galakser tilbage til jorden, hvilket begejstrer astronomer verden over.',
+                image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4',
+                followup: 'Opfølgning: Billederne har allerede afsløret tidligere uopdagede stjerneformationer, som forskerne nu vil granske nærmere.',
+                author: 'Christian Vestergaard',
+                date: '14:15 CET'
+            }
+        ];
+
+        let timelineData = [
+            { time: '17:18', title: 'Talsperson udtaler sig fra forhandlingerne i Genève', type: 'text' },
+            { time: '16:55', title: 'Videoklip: Se højdepunkterne fra dagens børshandel', type: 'video' },
+            { time: '16:30', title: 'Nye tal for europæisk gasforbrug offentliggjort', type: 'text' },
+            { time: '15:50', title: 'Billedserie fra opsendelsen på Cape Canaveral', type: 'image' }
+        ];
+
+        // RENDER POSTS GRID
+        function renderPosts(items = postsData) {
+            const container = document.getElementById('posts-grid');
+            document.getElementById('post-count-label').innerText = items.length;
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-12 bg-slate-900 rounded-xl border border-slate-800">
+                        <i class="fa-solid fa-newspaper text-3xl text-slate-600 mb-2"></i>
+                        <p class="text-slate-400 text-sm">Ingen opslag fundet i denne kategori.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = items.map(post => `
+                <article class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl hover:border-slate-700 transition flex flex-col group">
+                    
+                    <!-- Top Image & Video Badge -->
+                    <div class="relative h-48 overflow-hidden bg-slate-950">
+                        <img src="${post.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur text-brand-accent text-[11px] font-bold px-2.5 py-1 rounded border border-slate-800 uppercase">
+                            ${post.categoryLabel}
+                        </div>
+                        <div class="absolute bottom-3 right-3 bg-black/70 backdrop-blur text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                            <i class="fa-solid fa-video text-purple-400"></i> Video inkluderet
+                        </div>
+                    </div>
+
+                    <!-- Post Body Content -->
+                    <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="text-[11px] text-slate-500 mb-1 flex justify-between items-center">
+                                <span><i class="fa-regular fa-user mr-1"></i>${post.author}</span>
+                                <span>${post.date}</span>
+                            </div>
+                            <h3 onclick="openArticleModal(${post.id})" class="text-lg font-bold text-white font-serif hover:text-brand-accent cursor-pointer transition leading-snug mb-2">
+                                ${post.title}
+                            </h3>
+                            <p class="text-slate-400 text-xs line-clamp-3 leading-relaxed">
+                                ${post.intro}
+                            </p>
+                        </div>
+
+                        <!-- Follow-up Highlight Box -->
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                            <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-right-to-city"></i> Opfølgning
+                            </div>
+                            <p class="text-slate-300 text-[11px] italic line-clamp-2">${post.followup}</p>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                            <button onclick="openArticleModal(${post.id})" class="text-brand-accent font-semibold hover:underline flex items-center gap-1">
+                                Se hele opslaget <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                            <button onclick="bookmarkArticle(${post.id})" class="text-slate-500 hover:text-yellow-400 transition">
+                                <i class="fa-regular fa-bookmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </article>
+            `).join('');
+        }
+
+        // RENDER TIMELINE FEED
+        function renderTimeline() {
+            const container = document.getElementById('live-timeline');
+            container.innerHTML = timelineData.map(item => `
+                <div class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-800/50 transition border-l-2 border-brand-red">
+                    <div class="text-[11px] font-mono text-slate-400 font-bold pt-0.5">${item.time}</div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-200 font-medium leading-snug">${item.title}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // CMS PUBLISH HANDLER WITH HARDDISK FILE SUPPORT
+        function handleCMSPublish(e) {
+            e.preventDefault();
+            const title = document.getElementById('cms-title').value;
+            const category = document.getElementById('cms-category').value;
+            const author = document.getElementById('cms-author').value;
+            const intro = document.getElementById('cms-intro').value;
+            const followup = document.getElementById('cms-followup').value;
+
+            // Handle harddisk file uploads if selected
+            let image = document.getElementById('cms-image').value;
+            const imageFile = document.getElementById('cms-image-file').files[0];
+            if (imageFile) {
+                image = URL.createObjectURL(imageFile);
+            }
+
+            let videoUrl = document.getElementById('cms-video').value;
+            const videoFile = document.getElementById('cms-video-file').files[0];
+            if (videoFile) {
+                videoUrl = URL.createObjectURL(videoFile);
+            }
+
+            const categoryLabels = {
+                verden: 'Verdensnyheder',
+                politik: 'Politik',
+                teknologi: 'Teknologi',
+                okonomi: 'Økonomi'
+            };
+
+            const newPost = {
+                id: Date.now(),
+                category: category,
+                categoryLabel: categoryLabels[category] || 'Nyheder',
+                title: title,
+                intro: intro,
+                image: image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80',
+                videoUrl: videoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4',
+                followup: followup,
+                author: author || 'Redaktionen',
+                date: 'Lige nu'
+            };
+
+            postsData.unshift(newPost);
+            
+            // Add timeline entry
+            timelineData.unshift({
+                time: 'Nu',
+                title: `NYT OPSLAG: ${title}`,
+                type: 'text'
+            });
+
+            renderFilteredPosts();
+            renderTimeline();
+            toggleCMSOverlay();
+            
+            // Reset form
+            document.getElementById('cms-form').reset();
+            alert('Dit nyskabte multi-opslag er nu publiceret live på nyhedssitet!');
+        }
+
+        // OPEN ARTICLE FULL MODAL
+        function openArticleModal(id) {
+            const post = postsData.find(p => p.id === id) || postsData[0];
+            const modal = document.getElementById('article-modal');
+            const container = document.getElementById('article-modal-content');
+
+            container.innerHTML = `
+                <div class="flex justify-between items-start border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="bg-brand-red text-white text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider">${post.categoryLabel}</span>
+                        <h2 class="text-2xl font-bold text-white font-serif mt-2">${post.title}</h2>
+                        <div class="text-xs text-slate-400 mt-1">Af ${post.author} • Udgivet ${post.date}</div>
+                    </div>
+                    <button onclick="closeArticleModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="space-y-4">
+                    <p class="text-slate-200 text-sm leading-relaxed font-serif text-base">${post.intro}</p>
+
+                    <!-- Embedded Video Player -->
+                    <div class="rounded-xl overflow-hidden bg-black border border-slate-800 shadow-xl my-4">
+                        <div class="aspect-video-container">
+                            <video controls autoplay muted class="w-full h-full object-cover" src="${post.videoUrl}"></video>
+                        </div>
+                        <div class="p-2 bg-slate-950 text-slate-400 text-xs italic text-center">
+                            Videodækning tilhørende artiklen
+                        </div>
+                    </div>
+
+                    <!-- Image -->
+                    <div class="rounded-xl overflow-hidden border border-slate-800">
+                        <img src="${post.image}" class="w-full h-auto object-cover">
+                    </div>
+
+                    <!-- Followup Box -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-quote-left mr-1"></i> Opfølgende Analyse</h4>
+                        <p class="text-slate-300 text-xs leading-relaxed italic">${post.followup}</p>
+                    </div>
+                </div>
+
+                <!-- Comments Simulation -->
+                <div class="pt-4 border-t border-slate-800 space-y-3">
+                    <h4 class="text-sm font-bold text-white">Læserkommentarer (2)</h4>
+                    <div class="space-y-2 text-xs">
+                        <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                            <strong class="text-brand-accent">Henrik S.:</strong> Vigtig dækning. Godt at se medierne følge op på sagen så hurtigt.
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                            <strong class="text-brand-accent">Maria K.:</strong> Flot videokvalitet og overskueligt opslag.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeArticleModal() {
+            document.getElementById('article-modal').classList.add('hidden');
+        }
+
+        // HERO VIDEO CONTROLS
+        function toggleHeroPlay() {
+            const video = document.getElementById('hero-live-video');
+            const btn = document.getElementById('btn-hero-play');
+            if (video.paused) {
+                video.play();
+                btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            } else {
+                video.pause();
+                btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+        }
+
+        function toggleHeroMute() {
+            const video = document.getElementById('hero-live-video');
+            const icon = document.getElementById('hero-mute-icon');
+            const text = document.getElementById('hero-mute-text');
+            video.muted = !video.muted;
+            if (video.muted) {
+                icon.className = 'fa-solid fa-volume-xmark';
+                text.innerText = 'Slå lyd til';
+            } else {
+                icon.className = 'fa-solid fa-volume-high';
+                text.innerText = 'Lyd slået til';
+            }
+        }
+
+        // CATEGORY FILTERING
+        function filterCategory(cat) {
+            document.querySelectorAll('.nav-cat-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'border', 'border-slate-700', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
+            event.target.classList.add('bg-slate-800', 'border', 'border-slate-700', 'text-white');
+
+            if (cat === 'all' || cat === 'live') {
+                renderFilteredPosts();
+            } else {
+                const filtered = postsData.filter(p => p.category === cat);
+                renderPosts(filtered);
+            }
+        }
+
+        // SEARCH FUNCTIONALITY
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = postsData.filter(p => 
+                p.title.toLowerCase().includes(query) || 
+                p.intro.toLowerCase().includes(query) ||
+                p.followup.toLowerCase().includes(query)
+            );
+            renderPosts(filtered);
+        }
+
+        // OVERLAY TOGGLES & UTILS
+        function toggleCMSOverlay() {
+            const modal = document.getElementById('cms-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function shareArticle(title) {
+            alert(`Link til nyheden "${title}" er kopieret til udklipsholderen!`);
+        }
+
+        function bookmarkArticle(id) {
+            alert('Artiklen er gemt i dine bogmærker!');
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // ADMIN LOGIN FUNCTIONS
+        function openAdminLoginModal() {
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+        }
+
+        function closeAdminLoginModal() {
+            document.getElementById('admin-login-modal').classList.add('hidden');
+        }
+
+        let isAdminLoggedIn = false;
+
+        function updateAdminUI() {
+            const container = document.getElementById('top-bar-actions');
+            const badge = document.getElementById('current-mode-badge');
+            if (!container) return;
+
+            if (isAdminLoggedIn) {
+                badge.className = 'bg-green-500/20 text-green-400 border border-green-500/30 font-semibold px-2 py-0.5 rounded';
+                badge.innerText = 'Administrator Logget Ind (Full Access)';
+                container.innerHTML = `
+                    <button onclick="toggleCMSOverlay()" class="bg-brand-red hover:bg-brand-redHover text-white px-3 py-1 rounded font-semibold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-plus-circle"></i> Opret Nyt Multi-Opslag
+                    </button>
+                    <button onclick="openManagePostsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1 rounded font-semibold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-list-check text-brand-accent"></i> Administrer Opslag
+                    </button>
+                    <button onclick="handleAdminLogout()" class="bg-red-950/80 hover:bg-brand-red text-red-200 border border-red-800 px-3 py-1 rounded font-semibold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-right-from-bracket"></i> Log ud
+                    </button>
+                    <button onclick="toggleTheme()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700">
+                        <i class="fa-solid fa-moon" id="theme-icon"></i>
+                    </button>
+                `;
+            } else {
+                badge.className = 'bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold px-2 py-0.5 rounded';
+                badge.innerText = 'Offentlig Nyhedsside Visning';
+                container.innerHTML = `
+                    <button onclick="openAdminLoginModal()" class="bg-slate-800 hover:bg-slate-700 text-brand-accent border border-slate-700 px-3 py-1 rounded font-semibold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-lock"></i> Admin Login
+                    </button>
+                    <button onclick="toggleTheme()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700">
+                        <i class="fa-solid fa-moon" id="theme-icon"></i>
+                    </button>
+                `;
+            }
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
+
+            if (u === 'admin' && p === 'admin123') {
+                isAdminLoggedIn = true;
+                alert('Login succesfuldt! Velkommen til administrator-tilstand.');
+                closeAdminLoginModal();
+                updateAdminUI();
+                toggleCMSOverlay();
+            } else {
+                alert('Fejl: Forkert brugernavn eller adgangskode. Prøv igen (admin / admin123).');
+            }
+        }
+
+        function handleAdminLogout() {
+            isAdminLoggedIn = false;
+            alert('Du er nu logget ud af administrator-tilstand.');
+            updateAdminUI();
+        }
+
+        
+        // HERO FORSIDE-VIDEO UPLOAD HANDLER
+        function handleHeroUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const videoUrl = URL.createObjectURL(file);
+                
+                // Ensure hero-media-container has the <video> element back (in case YouTube iframe was active)
+                const container = document.getElementById('hero-media-container');
+                container.innerHTML = `<video id="hero-live-video" class="w-full h-full object-cover" autoplay muted loop playsinline src="${videoUrl}"></video>`;
+                
+                alert('Forside-videoen er nu opdateret direkte fra din harddisk!');
+            }
+        }
+
+        function handleHeroUrlChange(url) {
+            if (url.trim() !== '') {
+                const container = document.getElementById('hero-media-container');
+                container.innerHTML = `<video id="hero-live-video" class="w-full h-full object-cover" autoplay muted loop playsinline src="${url}"></video>`;
+            }
+        }
+
+        
+        // PUBLISH STATUS & POST MANAGEMENT LOGIC
+        function openManagePostsModal() {
+            renderCmsManageList(); if(typeof renderManagePostsList === 'function') renderManagePostsList();
+            document.getElementById('manage-posts-modal').classList.remove('hidden');
+        }
+
+        function closeManagePostsModal() {
+            document.getElementById('manage-posts-modal').classList.add('hidden');
+        }
+
+        function renderManagePostsList() {
+            const listContainer = document.getElementById('manage-posts-list');
+            if (postsData.length === 0) {
+                listContainer.innerHTML = '<div class="text-slate-500 text-xs py-4 text-center">Ingen opslag at vise.</div>';
+                return;
+            }
+
+            listContainer.innerHTML = postsData.map(post => {
+                const isPublished = post.published !== false; // default true
+                return `
+                    <div class="bg-slate-950 p-4 rounded-xl border ${isPublished ? 'border-slate-800' : 'border-red-900/50 bg-red-950/10'} flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-center gap-4 flex-1">
+                            <img src="${post.image}" class="w-16 h-16 object-cover rounded-lg border border-slate-800 shrink-0">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${isPublished ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                                        ${isPublished ? 'Publiceret' : 'Afpubliceret (Skjult)'}
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 uppercase font-bold">${post.categoryLabel || post.category}</span>
+                                </div>
+                                <h4 class="text-sm font-bold text-white font-serif">${post.title}</h4>
+                                <div class="text-[11px] text-slate-500">Af ${post.author} • ${post.date}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end border-t md:border-t-0 pt-2 md:pt-0 border-slate-800">
+                            <!-- Toggle Publish Status -->
+                            <button onclick="togglePublishStatus(${post.id})" class="px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 transition ${isPublished ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30 hover:bg-amber-600/30' : 'bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30'}">
+                                <i class="fa-solid ${isPublished ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                ${isPublished ? 'Afpublicer' : 'Publicer'}
+                            </button>
+
+                            <!-- Edit Button -->
+                            <button onclick="editPostPrompt(${post.id})" class="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-pen"></i> Rediger
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button onclick="deletePostConfirm(${post.id})" class="bg-red-950/60 hover:bg-brand-red text-red-300 hover:text-white border border-red-800 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-trash"></i> Slet
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function togglePublishStatus(id) {
+            const post = postsData.find(p => p.id === id);
+            if (post) {
+                post.published = (post.published === false) ? true : false;
+                renderCmsManageList(); if(typeof renderManagePostsList === 'function') renderManagePostsList();
+                renderFilteredPosts();
+            }
+        }
+
+        function deletePostConfirm(id) {
+            if (confirm('Er du sikker på, at du vil slette dette opslag permanent?')) {
+                postsData = postsData.filter(p => p.id !== id);
+                renderCmsManageList(); if(typeof renderManagePostsList === 'function') renderManagePostsList();
+                renderFilteredPosts();
+            }
+        }
+
+        function editPostPrompt(id) {
+            const post = postsData.find(p => p.id === id);
+            if (!post) return;
+
+            const newTitle = prompt('Rediger overskrift:', post.title);
+            if (newTitle === null) return;
+
+            const newIntro = prompt('Rediger indledende manchet/tekst:', post.intro);
+            if (newIntro === null) return;
+
+            const newFollowup = prompt('Rediger opfølgende analyse/tekst:', post.followup);
+            if (newFollowup === null) return;
+
+            post.title = newTitle;
+            post.intro = newIntro;
+            post.followup = newFollowup;
+
+            renderCmsManageList(); if(typeof renderManagePostsList === 'function') renderManagePostsList();
+            renderFilteredPosts();
+            alert('Opslaget blev opdateret!');
+        }
+
+        // Updated renderPosts function to respect published status
+        function renderFilteredPosts() {
+            const visiblePosts = postsData.filter(p => p.published !== false);
+            renderPosts(visiblePosts);
+        }
+
+        
+        // CMS TAB SWITCHING LOGIC
+        function switchCmsTab(tab) {
+            const createTab = document.getElementById('cms-tab-create');
+            const manageTab = document.getElementById('cms-tab-manage');
+            const btnCreate = document.getElementById('tab-btn-create');
+            const btnManage = document.getElementById('tab-btn-manage');
+
+            if (tab === 'create') {
+                createTab.classList.remove('hidden');
+                manageTab.classList.add('hidden');
+                btnCreate.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-brand-red text-white flex items-center gap-1.5 transition';
+                btnManage.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-1.5 transition';
+            } else {
+                createTab.classList.add('hidden');
+                manageTab.classList.remove('hidden');
+                btnManage.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-brand-red text-white flex items-center gap-1.5 transition';
+                btnCreate.className = 'px-4 py-2 rounded-lg font-bold text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-1.5 transition';
+                renderCmsManageList();
+            }
+        }
+
+        function renderCmsManageList() {
+            const listContainer = document.getElementById('cms-manage-posts-list');
+            if (postsData.length === 0) {
+                listContainer.innerHTML = '<div class="text-slate-500 text-xs py-4 text-center">Ingen opslag oprettet endnu.</div>';
+                return;
+            }
+
+            listContainer.innerHTML = postsData.map(post => {
+                const isPublished = post.published !== false;
+                return `
+                    <div class="bg-slate-950 p-3.5 rounded-xl border ${isPublished ? 'border-slate-800' : 'border-red-900/40 bg-red-950/10'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="flex items-center gap-3 flex-1">
+                            <img src="${post.image}" class="w-14 h-14 object-cover rounded-lg border border-slate-800 shrink-0">
+                            <div class="space-y-0.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase ${isPublished ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                                        ${isPublished ? 'Publiceret (Synlig)' : 'Afpubliceret (Skjult)'}
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-bold">${post.categoryLabel || post.category}</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-white font-serif line-clamp-1">${post.title}</h4>
+                                <div class="text-[10px] text-slate-500">Af ${post.author} • ${post.date}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
+                            <button onclick="togglePublishStatus(${post.id})" class="px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 transition ${isPublished ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30 hover:bg-amber-600/30' : 'bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30'}">
+                                <i class="fa-solid ${isPublished ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                ${isPublished ? 'Afpublicer' : 'Publicer'}
+                            </button>
+
+                            <button onclick="editPostPrompt(${post.id})" class="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-pen"></i> Rediger
+                            </button>
+
+                            <button onclick="deletePostConfirm(${post.id})" class="bg-red-950/60 hover:bg-brand-red text-red-300 hover:text-white border border-red-800 px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-trash"></i> Slet
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        
+        // YOUTUBE LIVE STREAM HANDLER
+        function openYouTubeLiveModal() {
+            document.getElementById('youtube-live-modal').classList.remove('hidden');
+        }
+
+        function closeYouTubeLiveModal() {
+            document.getElementById('youtube-live-modal').classList.add('hidden');
+        }
+
+        function extractYouTubeId(url) {
+            if (!url) return null;
+            // Handle regular watch urls, embed urls, and short youtu.be urls
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : url;
+        }
+
+        function applyYouTubeLiveStream() {
+            const inputVal = document.getElementById('youtube-live-input').value.trim();
+            if (!inputVal) {
+                alert('Indtast venligst et gyldigt YouTube link eller ID.');
+                return;
+            }
+
+            const videoId = extractYouTubeId(inputVal);
+            const container = document.getElementById('hero-media-container');
+
+            // Using youtube-nocookie and standard parameters to prevent embedding restrictions & error 153
+            container.innerHTML = `
+                <iframe class="w-full h-full absolute inset-0 border-0" src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&enablejsapi=1&playsinline=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            `;
+
+            closeYouTubeLiveModal();
+            alert('YouTube Live stream er nu aktiv på forsiden!');
+        }
+
+        window.onload = function() {
+            updateAdminUI();
+            renderFilteredPosts();
+            renderTimeline();
+        };
+    </script>
+
+    <!-- =============================================================== -->
+    <!-- MODAL 3: ADMIN LOGIN (USER / PASSWORD)                          -->
+    <!-- =============================================================== -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-6 space-y-5">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-lock text-brand-red text-lg"></i>
+                    <h3 class="text-lg font-bold text-white">Admin Login</h3>
+                </div>
+                <button onclick="closeAdminLoginModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Brugernavn (Username)</label>
+                    <input type="text" id="admin-user" required placeholder="Indtast brugernavn..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Adgangskode (Password)</label>
+                    <input type="password" id="admin-pass" required placeholder="Indtast adgangskode..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-accent">
+                </div>
+                <div class="text-[11px] text-slate-500 bg-slate-950 p-2.5 rounded border border-slate-800">
+                    Standard login: Brugernavn: <strong class="text-slate-300">admin</strong> / Adgangskode: <strong class="text-slate-300">admin123</strong>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeAdminLoginModal()" class="px-3 py-1.5 text-slate-400 hover:text-xs text-slate-400">Annuller</button>
+                    <button type="submit" class="bg-brand-red hover:bg-brand-redHover text-white px-4 py-1.5 rounded text-xs font-bold shadow">Log ind</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- MODAL 4: ADMIN OPSLAGS-STYRING (REDIGER / SLET / UNPUBLISH)     -->
+    <!-- =============================================================== -->
+    <div id="manage-posts-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center sticky top-0 bg-slate-900 z-10">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="closeManagePostsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-house text-brand-accent"></i> Tilbage til Forside
+                    </button>
+                    <i class="fa-solid fa-list-check text-brand-accent text-xl"></i>
+                    <h3 class="text-xl font-bold text-white">Administrer Opslag & Multi-Medier</h3>
+                </div>
+                <button onclick="closeManagePostsModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 space-y-4 flex-1">
+                <p class="text-xs text-slate-400">Her kan du se alle eksisterende og oprettede opslag/videoklip, redigere deres indhold, slette dem permanent eller skifte status mellem <strong>Publiceret</strong> og <strong>Afpubliceret (Skjult)</strong>.</p>
+                
+                <div id="manage-posts-list" class="space-y-3">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+                <button onclick="closeManagePostsModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-xs font-bold">Luk vindue</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =============================================================== -->
+    <!-- MODAL 5: YOUTUBE LIVE STREAM LINK MODAL                         -->
+    <!-- =============================================================== -->
+    <div id="youtube-live-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl p-6 space-y-5">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-brands fa-youtube text-brand-red text-xl"></i>
+                    <h3 class="text-lg font-bold text-white">Indsæt YouTube Live Stream</h3>
+                </div>
+                <button onclick="closeYouTubeLiveModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">YouTube Live URL eller Video ID</label>
+                    <input type="text" id="youtube-live-input" placeholder="F.eks. https://www.youtube.com/watch?v=XXXXXX eller live embed URL" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-white focus:outline-none focus:border-brand-accent font-mono">
+                    <p class="text-[11px] text-slate-500 mt-1">Indsæt et standard YouTube-link eller live stream URL. Sitet omformer det automatisk til live afspilning på forsiden.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeYouTubeLiveModal()" class="px-4 py-2 text-slate-400 hover:text-white text-xs">Annuller</button>
+                    <button type="button" onclick="applyYouTubeLiveStream()" class="bg-brand-red hover:bg-brand-redHover text-white px-5 py-2 rounded text-xs font-bold shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-play"></i> Start YouTube Live
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
